@@ -21,8 +21,11 @@
 +   typescript type definitions for express:
     `npm install -D @types/express`
 
-# +   loads environment variables from .env file:
-#     `npm install dotenv`
++   loads environment variables from .env file:
+    `npm install dotenv`
+
++   support for aws s3 bucket
+    `npm install @aws-sdk/client-s3`
 
 ***********************************
 +   in project root, create `tsconfig.json`
