@@ -1,3 +1,9 @@
+import dotenv from "dotenv";
+
+// allows project see `process.env` on the terminal
+// MUST be called before any other imports that use environment variables
+dotenv.config();
+
 import express, { Express } from "express";
 import songRouter from "./routes/songRoutes";
 

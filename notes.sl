@@ -24,8 +24,16 @@
 +   loads environment variables from .env file:
     `npm install dotenv`
 
-+   support for aws s3 bucket
++   aws s3 client for bucket operations:
     `npm install @aws-sdk/client-s3`
+
++   generates signed urls for private s3 objects:
+    `npm install @aws-sdk/s3-request-presigner`
+
++   converts time strings to milliseconds, allows me do ms("10s"):
+    `npm i ms@2.1.3`
+    `npm i -D @types/ms`, `-D` means it's only available in the development environment
+
 
 ***********************************
 +   in project root, create `tsconfig.json`
