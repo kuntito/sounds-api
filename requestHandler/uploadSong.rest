@@ -1,0 +1,6 @@
+POST http://localhost:5000/api/sounds/song
+Content-Type: application/json
+
+{
+    "filePath": "C:\\Users\\owola\\Documents\\vs code\\projects\\Sounds\\dummyData\\Can't Breathe.mp3"
+}

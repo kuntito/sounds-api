@@ -13,7 +13,7 @@ const PORT = 5000;
 // allows project to parse JSON in request body
 app.use(express.json());
 
-app.use("/api/songs", songRouter);
+app.use("/api/sounds", songRouter);
 
 app.listen(PORT, () => {
     console.log(`server started at http://localhost:${PORT}`);

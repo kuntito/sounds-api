@@ -1,10 +1,8 @@
-import {
-    S3Client,
-} from "@aws-sdk/client-s3";
+import { S3Client } from "@aws-sdk/client-s3";
 
 const { AWS_REGION, AWS_ACCESS_KEY, AWS_SECRET_ACCESS_KEY } = process.env;
 
-const s3 = new S3Client({
+const soundsS3 = new S3Client({
     region: AWS_REGION,
     credentials: {
         accessKeyId: AWS_ACCESS_KEY!,
@@ -12,4 +10,4 @@ const s3 = new S3Client({
     },
 });
 
-export default s3;
+export default soundsS3;
