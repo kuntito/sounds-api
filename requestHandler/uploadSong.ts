@@ -1,7 +1,7 @@
 import { Request, Response, RequestHandler } from "express";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import path from "path";
-import fs from "fs";
+import fs from "fs"
 import { randomUUID } from "crypto";
 import db__sounds_md from "../services/db__soundsMd";
 import NodeID3 from "node-id3";
@@ -9,6 +9,18 @@ import soundsS3 from "../services/s3Client";
 
 
 const { AWS_BUCKET_NAME } = process.env;
+
+
+const deleteUploadedSong = async (key: string) => {
+    try {
+        await soundsS3.send(new DeleteObjectCommand({
+            Bucket: AWS_BUCKET_NAME,
+            Key: key
+        }))
+    } catch (e) {
+        console.log(`could delete song with key: ${key}`);
+    }
+}
 
 
 const uploadSong: RequestHandler = async (req: Request, res: Response) => {
@@ -31,13 +43,22 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
     }
 
 
-    const id = randomUUID();
+
+    
+    const mp3suffix = ".mp3"
+    const uuid = randomUUID();
+    const fileStem = path.basename(fp, mp3suffix);
+    
+    // uuid alone ensures uniqueness
+    // `fileStem` included for readability in S3 console
+    const uniqueS3Key = `${fileStem}-${uuid}${mp3suffix}`
+
     // embed id into file..
     NodeID3.update(
         {
             userDefinedText: [{
                 description: "id",
-                value: id
+                value: uniqueS3Key
             }]
         },
         fp
@@ -45,17 +66,13 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
 
     const fileBuffer = fs.readFileSync(fp);
 
-    const fileName = path.basename(fp);
     try {
         await soundsS3.send(new PutObjectCommand({
             Bucket: AWS_BUCKET_NAME,
-            Key: fileName,
-            Body: fileBuffer
+            Key: uniqueS3Key,
+            Body: fileBuffer,
+            ContentType: "audio/mpeg"
         }));
-
-        db__sounds_md.prepare(`INSERT INTO songs_md (id, is_uploaded)
-            VALUES (?, 1)
-        `).run(id);
 
     } catch (error) {
 
@@ -63,7 +80,24 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
             .status(500)
             .json({
                 success: false,
-                message: "upload failed"
+                message: `s3 upload failed, ${(error as Error).message}`
+            })
+    }
+
+    try {
+        db__sounds_md.prepare(`INSERT INTO songs_md (id)
+            VALUES (?)
+        `).run(uniqueS3Key);
+    } catch (error) {
+
+        // if insert fails, delete uploaded song
+        deleteUploadedSong(uniqueS3Key);
+
+        return res
+            .status(500)
+            .json({
+                success: false,
+                message: `new song, db insert failed, ${(error as Error).message}`
             })
     }
 
