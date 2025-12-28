@@ -6,15 +6,13 @@ import { randomUUID } from "crypto";
 import db__sounds_md from "../services/db__soundsMd";
 import NodeID3 from "node-id3";
 import soundsS3 from "../services/s3Client";
-
-
-const { AWS_BUCKET_NAME } = process.env;
+import { envConfig } from "../config/envConfig";
 
 
 const deleteUploadedSong = async (key: string) => {
     try {
         await soundsS3.send(new DeleteObjectCommand({
-            Bucket: AWS_BUCKET_NAME,
+            Bucket: envConfig.AWS_BUCKET_NAME,
             Key: key
         }))
     } catch (e) {
@@ -68,7 +66,7 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
 
     try {
         await soundsS3.send(new PutObjectCommand({
-            Bucket: AWS_BUCKET_NAME,
+            Bucket: envConfig.AWS_BUCKET_NAME,
             Key: uniqueS3Key,
             Body: fileBuffer,
             ContentType: "audio/mpeg"
