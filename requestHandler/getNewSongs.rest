@@ -3,7 +3,6 @@ Content-Type: application/json
 
 {
     "songIds": [
-        "Can't Breathe-ad3921c5-d695-4354-9271-843d2c01aed1.mp3",
-        "Champion-37becd57-c7e9-4605-ae38-6440f6f279f0.mp3"
+        "Can't Breathe-ad3921c5-d695-4354-9271-843d2c01aed1.mp3"
     ]
 }
