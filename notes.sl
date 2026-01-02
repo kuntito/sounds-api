@@ -84,6 +84,11 @@ app.listen(PORT, () => {
     `nodemon` is the command.
     `server.ts` is the relative file path
 
++   running node files in terminal:
+    `npx ts-node filename.ts`
+
+    where `filename.ts` is the filepath, it assumes you've cd'd into the files root dir.
+
 *** TAG INFO ***
 +   reading tags with `music-metadata`
 
