@@ -1,8 +1,8 @@
 import { Request, Response, RequestHandler } from "express";
-import db__sounds_md from "../services/db__soundsMd";
 import soundsS3 from "../services/s3Client";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { envConfig } from "../config/envConfig";
+import neonDbClient from "../services/neonDbClient";
 
 const deleteSong: RequestHandler = async (req: Request, res: Response) => {
     const { songId: s3Key } = req.params;
@@ -17,16 +17,16 @@ const deleteSong: RequestHandler = async (req: Request, res: Response) => {
 
     let isDeletedFromDb = false;
     try {
-
-        isDeletedFromDb = db__sounds_md
-            .prepare(`DELETE FROM songs_md WHERE id = ?`)
-            .run(s3Key)
-            .changes > 0;
+        const result = await neonDbClient.query(
+            `DELETE FROM songs_md WHERE id = $1`,
+            [s3Key],
+        )
+        isDeletedFromDb = (result.rowCount ?? 0) > 0;
     } catch (e) {
         return res.status(500).json({
-            success: false,
-            message: `error occurred, ${(e as Error).message}`,
-        });
+            succesS: false,
+            message: `error occurred, ${(e as Error).message}`
+        })
     }
 
     try {

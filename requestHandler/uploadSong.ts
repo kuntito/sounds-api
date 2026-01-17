@@ -3,10 +3,10 @@ import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import path from "path";
 import fs from "fs"
 import { randomUUID } from "crypto";
-import db__sounds_md from "../services/db__soundsMd";
 import NodeID3 from "node-id3";
 import soundsS3 from "../services/s3Client";
 import { envConfig } from "../config/envConfig";
+import neonDbClient from "../services/neonDbClient";
 
 
 const deleteUploadedSong = async (key: string) => {
@@ -83,21 +83,26 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
             })
     }
 
+    const tags = NodeID3.read(fp);
+
     try {
-        db__sounds_md.prepare(`INSERT INTO songs_md (id)
-            VALUES (?)
-        `).run(uniqueS3Key);
+        await neonDbClient.query(
+            `INSERT INTO songs_md (id, title, artist)
+            VALUES ($1, $2, $3)`,
+            [uniqueS3Key, tags.title, tags.artist]
+        )
     } catch (error) {
 
         // if insert fails, delete uploaded song
         deleteUploadedSong(uniqueS3Key);
 
         return res
-            .status(500)
-            .json({
-                success: false,
-                message: `new song, db insert failed, ${(error as Error).message}`
-            })
+        .status(500)
+        .json({
+            success: false,
+            message: `new song, db insert failed, ${(error as Error).message}`
+        })
+
     }
 
     return res

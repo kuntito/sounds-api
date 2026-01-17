@@ -1,9 +1,9 @@
 import { Request, Response, RequestHandler } from "express";
-import db__sounds_md from "../services/db__soundsMd";
 import getS3ObjectUrl from "../util/getS3ObjectUrl";
 import s3Client from "../services/s3Client";
 
 import { envConfig } from "../config/envConfig";
+import neonDbClient from "../services/neonDbClient";
 
 interface RequestType {
     songIds: string[];
@@ -21,7 +21,7 @@ const getNewSongs: RequestHandler = async (req: Request, res: Response) => {
     }
 
 
-    const setOfNewIds = getSongIdsClientLacks(clientSongIds);
+    const setOfNewIds = await getSongIdsClientLacks(clientSongIds);
     if (setOfNewIds === undefined){
         return res.status(500).json({
             success: false,
@@ -53,8 +53,8 @@ export default getNewSongs;
 /**
  * Returns song IDs present in repo but not on client.
  */
-const getSongIdsClientLacks = (clientIds: string[]): Set<string> | undefined => {
-    const maybeAllSongIds = getAllSongIds();
+const getSongIdsClientLacks = async (clientIds: string[]): Promise<Set<string> | undefined> => {
+    const maybeAllSongIds = await getAllSongIds();
     if (maybeAllSongIds === undefined) {
         return undefined;
     }
@@ -67,15 +67,16 @@ const getSongIdsClientLacks = (clientIds: string[]): Set<string> | undefined => 
 };
 
 
-const getAllSongIds = (): Set<string> | undefined => {
+const getAllSongIds = async (): Promise<Set<string> | undefined> => {
+
     try {
-        const ids = db__sounds_md
-            .prepare(`SELECT id FROM songs_md`)
-            .pluck()
-            .all() as string[];
+        const result = await neonDbClient.query(`SELECT id FROM songs_md`);
+        const ids = result.rows.map(
+            row => row.id
+        ) as string[];
 
         return new Set(ids);
-    } catch(e) {
+    } catch (e) {
         console.log(`couldn't get all song ids, ${(e as Error).message}`);
         return undefined;
     }

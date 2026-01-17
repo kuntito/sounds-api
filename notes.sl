@@ -89,6 +89,24 @@ app.listen(PORT, () => {
 
     where `filename.ts` is the filepath, it assumes you've cd'd into the files root dir.
 
+
+*** BUN ***
+    allows running TypeScript files directly with VS Code's Code Runner extension
+
++   install bun:
+    follow instructions at `https://bun.sh/docs/installation#windows`
+
++   add bun to PATH
+
++   configure Code Runner to use bun for TypeScript:
+    in VS Code `settings.json`, add:
+
+    `
+    "code-runner.executorMap": {
+        "typescript": "bun"
+    }
+    `
+
 *** TAG INFO ***
 +   reading tags with `music-metadata`
 
@@ -149,3 +167,29 @@ app.listen(PORT, () => {
         - `ID3v2.3`: metadata format version for mp3 files, use `console.log(metadata.native);` to verify version
         - `TXXX`: id3 frame type for user-defined text fields
         - `uuid`: the custom tag name you defined, format is `TXXX:<description>`
+
+*** NEON POSTGRES ***
++   create a neon account:
+    `https://neon.tech`
+
++   setup project:
+    - postgres version: 17 (default)
+    - cloud service: AWS
+    - region: default
+
++   to get connection string:
+    click "Connect" (top right corner at time of writing)
+
+    you'll see something like:
+    `psql 'postgresql://...some other things...'`
+
+    what's within the quotes is the connection string.
+
++   add connection string to `.env`:
+    `NEON_CONN_STR=postgresql://...some other things...`
+
++   postgres client for node.js:
+    `npm i pg`
+
++   ts type definitions for `pg`:
+    `npm i -D @types/pg`
