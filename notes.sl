@@ -193,3 +193,43 @@ app.listen(PORT, () => {
 
 +   ts type definitions for `pg`:
     `npm i -D @types/pg`
+
+*** DRIZZLE ORM ***
++   single source of truth for SQL schema and TypeScript types.
+    define schema once, drizzle infers the types - no manual duplication.
+    `npm install drizzle-orm`
+    `npm install -D drizzle-kit`
+
+    you'd create the table type, see `schema/song.ts`:
+
+    `
+    import { pgTable, text } from "drizzle-orm/pg-core";
+
+
+    export const songsMd = pgTable("songs_md", {
+        id: text("id").primaryKey(),
+        title: text("title"),
+        artist: text("artist"),
+    });
+
+    export type Song = typeof songsMd.$inferSelect;
+    `
+
+    create a config file i.e. `drizzle.config.ts`
+    `
+    import { defineConfig } from 'drizzle-kit';
+    import { envConfig } from './config/envConfig';
+
+    export default defineConfig({
+        schema: "./schema/song.ts",
+        dialect: 'postgresql',
+        dbCredentials: {
+            url: envConfig.NEON_CONN_STR
+        }
+    })
+    `
+
+    then in terminal, run:
+    `npx drizzle-kit push`
+
+    to create the tables in your neon account.

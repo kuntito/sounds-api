@@ -1,13 +1,13 @@
 import { Request, Response, RequestHandler } from "express";
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import path from "path";
-import fs from "fs"
+import fs from "fs";
 import { randomUUID } from "crypto";
 import NodeID3 from "node-id3";
 import soundsS3 from "../services/s3Client";
 import { envConfig } from "../config/envConfig";
-import neonDbClient from "../services/neonDbClient";
-
+import { songMdDb } from "../services/neonDbClient";
+import { songsMdTable } from "../schema/songsMd";
 
 const deleteUploadedSong = async (key: string) => {
     try {
@@ -86,11 +86,11 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
     const tags = NodeID3.read(fp);
 
     try {
-        await neonDbClient.query(
-            `INSERT INTO songs_md (id, title, artist)
-            VALUES ($1, $2, $3)`,
-            [uniqueS3Key, tags.title, tags.artist]
-        )
+        await songMdDb.insert(songsMdTable).values({
+            id: uniqueS3Key,
+            title: tags.title,
+            artist: tags.artist,
+        });
     } catch (error) {
 
         // if insert fails, delete uploaded song

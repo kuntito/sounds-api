@@ -3,7 +3,8 @@ import getS3ObjectUrl from "../util/getS3ObjectUrl";
 import s3Client from "../services/s3Client";
 
 import { envConfig } from "../config/envConfig";
-import neonDbClient from "../services/neonDbClient";
+import { songMdDb } from "../services/neonDbClient";
+import { songsMdTable } from "../schema/songsMd";
 
 interface RequestType {
     songIds: string[];
@@ -70,10 +71,10 @@ const getSongIdsClientLacks = async (clientIds: string[]): Promise<Set<string> |
 const getAllSongIds = async (): Promise<Set<string> | undefined> => {
 
     try {
-        const result = await neonDbClient.query(`SELECT id FROM songs_md`);
-        const ids = result.rows.map(
-            row => row.id
-        ) as string[];
+        const result = await songMdDb
+            .select({ id: songsMdTable.id })
+            .from(songsMdTable);
+        const ids = result.map((row) => row.id);
 
         return new Set(ids);
     } catch (e) {
