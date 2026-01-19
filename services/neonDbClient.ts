@@ -1,7 +1,6 @@
 import { Pool } from "pg";
 import { envConfig } from "../config/envConfig";
-
-console.log("neonClient module loaded");
+import { drizzle } from "drizzle-orm/node-postgres";
 
 const neonDbClient = new Pool({
     connectionString: envConfig.NEON_CONN_STR,
@@ -9,16 +8,4 @@ const neonDbClient = new Pool({
     ssl: { rejectUnauthorized: false },
 });
 
-neonDbClient
-    .query(
-        `
-    CREATE TABLE IF NOT EXISTS songs_md (
-        id TEXT PRIMARY KEY,
-        title TEXT,
-        artist TEXT
-    )
-`
-    )
-    .catch((err) => console.error("Table creation failed:", err));
-
-export default neonDbClient;
+export const songMdDb = drizzle(neonDbClient);
