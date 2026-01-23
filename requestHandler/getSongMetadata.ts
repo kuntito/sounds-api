@@ -10,8 +10,10 @@ type GetSongsMetadataResponse = {
     debug: object;
 };
 
-/**                                                                                                             * Returns metadata for all songs.
-*                                                                                                             * 200 OK
+/**
+* Returns metadata for all songs.
+* 
+* 200 OK
 * {
 *     "success": true,
 *     "songsMd": [
