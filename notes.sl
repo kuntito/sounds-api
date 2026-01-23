@@ -233,3 +233,10 @@ app.listen(PORT, () => {
     `npx drizzle-kit push`
 
     to create the tables in your neon account.
+
++   enables cross-origin requests for frontend integration:
+    `npm install cors`
+    `npm install -D @types/cors`
+
++   to kill node servers
+    taskkill /F /IM node.exe
