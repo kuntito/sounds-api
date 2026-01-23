@@ -10,8 +10,12 @@ type GetSongsMetadataResponse = {
     debug: object;
 };
 
+<<<<<<< HEAD
 /**
  * Returns metadata for all songs.
+=======
+/**                                                                                                                                          * Returns metadata for all songs.
+>>>>>>> 7c8e001b23c7b673c1b524e82bcea9b09239f452
  *                                                                                                                                        
  * 200 OK                                                                                                                                 
  * {
