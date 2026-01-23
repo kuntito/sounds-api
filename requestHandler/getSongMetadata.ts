@@ -1,8 +1,39 @@
-import { RequestHandler } from "express";
+import { RequestHandler, Request, Response } from "express";
 import { songMdDb } from "../services/neonDbClient";
-import { songsMdTable } from "../schema/songsMd";
+import { SongMd, songsMdTable } from "../schema/songsMd";
 
-const getSongsMetadata: RequestHandler = async (req, res) => {
+type GetSongsMetadataResponse = {
+    success: true;
+    songsMd: SongMd[];
+} | {
+    success: false;
+    debug: object;
+};
+
+/**                                                                                                                                          * Returns metadata for all songs.
+ *                                                                                                                                        
+ * 200 OK                                                                                                                                 
+ * {
+ *     "success": true,
+ *     "songsMd": [
+ *         { 
+ *          "id": "string (S3 key)",
+ *          "title": "string",
+ *          "artist": "string",
+ *        }
+ *     ]
+ * }
+ *
+ * 500 Internal Server Error
+ * {
+ *     "success": false,
+ *     "debug": { "message": "string" }
+ * }
+ */
+const getSongsMetadata = async (
+    req: Request, 
+    res: Response<GetSongsMetadataResponse>
+) => {
     try {
         const md = await songMdDb
             .select()
@@ -12,14 +43,16 @@ const getSongsMetadata: RequestHandler = async (req, res) => {
             .status(200)
             .json({
                 success: true,
-                message: md
+                songsMd: md
             })
     } catch (e) {
         return res
             .status(500)
             .json({
                 success: false,
-                message: `md fetch failed, ${(e as Error).message}`
+                debug: {
+                    errorMessage: `md fetch failed, ${(e as Error).message}`
+                }
             })
 
     }

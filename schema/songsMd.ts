@@ -6,4 +6,4 @@ export const songsMdTable = pgTable("songs_md", {
     artist: text("artist"),
 });
 
-export type Song = typeof songsMdTable.$inferSelect;
+export type SongMd = typeof songsMdTable.$inferSelect;
