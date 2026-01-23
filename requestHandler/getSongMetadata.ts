@@ -10,31 +10,25 @@ type GetSongsMetadataResponse = {
     debug: object;
 };
 
-<<<<<<< HEAD
-/**
- * Returns metadata for all songs.
-=======
-/**                                                                                                                                          * Returns metadata for all songs.
->>>>>>> 7c8e001b23c7b673c1b524e82bcea9b09239f452
- *                                                                                                                                        
- * 200 OK                                                                                                                                 
- * {
- *     "success": true,
- *     "songsMd": [
- *         { 
- *          "id": "string (S3 key)",
- *          "title": "string",
- *          "artist": "string",
- *        }
- *     ]
- * }
- *
- * 500 Internal Server Error
- * {
- *     "success": false,
- *     "debug": { "message": "string" }
- * }
- */
+/**                                                                                                             * Returns metadata for all songs.
+*                                                                                                             * 200 OK
+* {
+*     "success": true,
+*     "songsMd": [
+*         { 
+*          "id": "string (S3 key)",
+*          "title": "string",
+*          "artist": "string",
+*        }
+*     ]
+* }
+*
+* 500 Internal Server Error
+* {
+*     "success": false,
+*     "debug": { "message": "string" }
+* }
+*/
 const getSongsMetadata = async (
     req: Request, 
     res: Response<GetSongsMetadataResponse>
