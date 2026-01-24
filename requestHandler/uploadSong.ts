@@ -22,7 +22,6 @@ const deleteUploadedSong = async (key: string) => {
 
 type UploadSongResponse = {
     success: true,
-    message: string
 } | {
     success: false,
     clientErrorMessage?: string,
@@ -123,7 +122,6 @@ const uploadSong: RequestHandler = async (
         .status(201)
         .json({
             success: true,
-            message: "upload succeeded"
         })
 
 };
