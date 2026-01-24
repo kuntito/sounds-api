@@ -20,15 +20,26 @@ const deleteUploadedSong = async (key: string) => {
     }
 }
 
+type UploadSongResponse = {
+    success: true,
+    message: string
+} | {
+    success: false,
+    clientErrorMessage?: string,
+    debug?: object;
+}
 
-const uploadSong: RequestHandler = async (req: Request, res: Response) => {
+const uploadSong: RequestHandler = async (
+    req: Request,
+    res: Response<UploadSongResponse>
+) => {
     const { filePath: fp } = req.body;
 
     const isMp3 = path.extname(fp).toLowerCase() === ".mp3";
     if (!isMp3) {
         return res.status(400).json({
             success: false,
-            message: "only mp3 files allowed",
+            clientErrorMessage: "only mp3 files allowed",
         });
     }
 
@@ -36,12 +47,9 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
     if (!fileExists) {
         return res.status(400).json({
             success: false,
-            message: `song file, ${fp}, does not exist`
+            clientErrorMessage: `song file, ${fp}, does not exist`
         });
     }
-
-
-
     
     const mp3suffix = ".mp3"
     const uuid = randomUUID();
@@ -79,7 +87,10 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
             .status(500)
             .json({
                 success: false,
-                message: `s3 upload failed, ${(error as Error).message}`
+                clientErrorMessage: "error occurred",
+                debug: {
+                    errorMessage: `s3 upload failed, ${(error as Error).message}`
+                }
             })
     }
 
@@ -100,7 +111,10 @@ const uploadSong: RequestHandler = async (req: Request, res: Response) => {
         .status(500)
         .json({
             success: false,
-            message: `new song, db insert failed, ${(error as Error).message}`
+            clientErrorMessage: "error occurred",
+            debug: {
+                errorMessage: `new song, db insert failed, ${(error as Error).message}`
+            }
         })
 
     }
