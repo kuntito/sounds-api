@@ -1,24 +1,14 @@
-import { Request, Response, RequestHandler } from "express";
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import path from "path";
-import fs from "fs";
 import { randomUUID } from "crypto";
+import { Request, RequestHandler, Response } from "express";
+import fs from "fs";
 import NodeID3 from "node-id3";
-import soundsS3 from "../services/s3Client";
+import path from "path";
 import { envConfig } from "../config/envConfig";
-import { songMdDb } from "../services/neonDbClient";
 import { songsMdTable } from "../schema/songsMd";
+import { songMdDb } from "../services/neonDbClient";
+import soundsS3 from "../services/s3Client";
 
-const deleteUploadedSong = async (key: string) => {
-    try {
-        await soundsS3.send(new DeleteObjectCommand({
-            Bucket: envConfig.AWS_BUCKET_NAME,
-            Key: key
-        }))
-    } catch (e) {
-        console.log(`could delete song with key: ${key}`);
-    }
-}
 
 type UploadSongResponse = {
     success: true,
@@ -32,27 +22,31 @@ const uploadSong: RequestHandler = async (
     req: Request,
     res: Response<UploadSongResponse>
 ) => {
-    const { filePath: fp } = req.body;
+    const uploadedFile = req.file;
+    if (!uploadedFile) {
+        return res.status(400).json({
+            success: false,
+            clientErrorMessage: "no file uploaded",
+        });
+    }
 
-    const isMp3 = path.extname(fp).toLowerCase() === ".mp3";
+    const isMp3 = path.extname(uploadedFile.originalname).toLowerCase() === '.mp3';
     if (!isMp3) {
+        fs.unlinkSync(uploadedFile.path); // deletes file
         return res.status(400).json({
             success: false,
             clientErrorMessage: "only mp3 files allowed",
         });
     }
-
-    const fileExists = fs.existsSync(fp);
-    if (!fileExists) {
-        return res.status(400).json({
-            success: false,
-            clientErrorMessage: `song file, ${fp}, does not exist`
-        });
-    }
+    
+    const tempFp = uploadedFile.path;
     
     const mp3suffix = ".mp3"
     const uuid = randomUUID();
-    const fileStem = path.basename(fp, mp3suffix);
+    const fileStem = path.basename(
+        uploadedFile.originalname, // `multer` uses a random file name without extension
+        mp3suffix
+    );
     
     // uuid alone ensures uniqueness
     // `fileStem` included for readability in S3 console
@@ -67,10 +61,10 @@ const uploadSong: RequestHandler = async (
                 value: uniqueS3Key
             }]
         },
-        fp
+        tempFp
     )
 
-    const fileBuffer = fs.readFileSync(fp);
+    const fileBuffer = fs.readFileSync(tempFp);
 
     try {
         await soundsS3.send(new PutObjectCommand({
@@ -93,7 +87,7 @@ const uploadSong: RequestHandler = async (
             })
     }
 
-    const tags = NodeID3.read(fp);
+    const tags = NodeID3.read(tempFp);
 
     try {
         await songMdDb.insert(songsMdTable).values({
@@ -118,6 +112,8 @@ const uploadSong: RequestHandler = async (
 
     }
 
+    fs.unlinkSync(tempFp); // delete file after processing..
+
     return res
         .status(201)
         .json({
@@ -127,3 +123,17 @@ const uploadSong: RequestHandler = async (
 };
 
 export default uploadSong;
+
+
+
+
+const deleteUploadedSong = async (key: string) => {
+    try {
+        await soundsS3.send(new DeleteObjectCommand({
+            Bucket: envConfig.AWS_BUCKET_NAME,
+            Key: key
+        }))
+    } catch (e) {
+        console.log(`could delete song with key: ${key}`);
+    }
+}

@@ -240,3 +240,7 @@ app.listen(PORT, () => {
 
 +   to kill node servers
     `taskkill /F /IM node.exe`
+
++   handles file uploads and saves to temporary location
+    `npm install multer`
+    `npm install -D @types/multer`
