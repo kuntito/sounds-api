@@ -40,11 +40,17 @@ const getSongsMetadata = async (
             .select()
             .from(songsMdTable);
 
+        const normalizedMd = md.map(song => ({
+            id: song.id,
+            title: song.title ?? "...",
+            artist: song.artist ?? "..."
+        }))
+
         return res
             .status(200)
             .json({
                 success: true,
-                songsMd: md
+                songsMd: normalizedMd
             })
     } catch (e) {
         return res

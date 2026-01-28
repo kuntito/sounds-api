@@ -244,3 +244,15 @@ app.listen(PORT, () => {
 +   handles file uploads and saves to temporary location
     `npm install multer`
     `npm install -D @types/multer`
+
+*** make dev URL public ***
++   install `ngrok`, i had it installed but Claude says
+    `npm install -g ngrok` would work
+
++   start the server
+    `npm run dev`
+
+    say it starts with `http://localhost:5000`
+
++   in a different terminal, run:
+    `ngrok http 5000`
