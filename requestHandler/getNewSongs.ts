@@ -1,10 +1,9 @@
-import { Request, Response, RequestHandler } from "express";
+import { Request, RequestHandler, Response } from "express";
+import soundsS3 from "../services/s3Client";
 import getS3ObjectUrl from "../util/getS3ObjectUrl";
-import s3Client from "../services/s3Client";
 
 import { envConfig } from "../config/envConfig";
-import { songMdDb } from "../services/neonDbClient";
-import { songsMdTable } from "../schema/songsMd";
+import getAllSongIds from "../helpers/getAllSongIds";
 
 interface RequestType {
     songIds: string[];
@@ -33,7 +32,7 @@ const getNewSongs: RequestHandler = async (req: Request, res: Response) => {
     const idArray = [...setOfNewIds];
 
     const urlPromises = idArray.map((id) =>
-        getS3ObjectUrl(s3Client, id, envConfig.AWS_BUCKET_NAME)
+        getS3ObjectUrl(soundsS3, id, envConfig.AWS_BUCKET_NAME)
             .catch(err => {
                 console.log(`error occurred: ${(err as Error).message}`);
             })
@@ -60,25 +59,9 @@ const getSongIdsClientLacks = async (clientIds: string[]): Promise<Set<string> |
         return undefined;
     }
 
-    const idsToReturn = maybeAllSongIds;
+    const idsToReturn = new Set(maybeAllSongIds);
 
     clientIds.forEach((id) => idsToReturn.delete(id));
 
     return idsToReturn;
-};
-
-
-const getAllSongIds = async (): Promise<Set<string> | undefined> => {
-
-    try {
-        const result = await songMdDb
-            .select({ id: songsMdTable.id })
-            .from(songsMdTable);
-        const ids = result.map((row) => row.id);
-
-        return new Set(ids);
-    } catch (e) {
-        console.log(`couldn't get all song ids, ${(e as Error).message}`);
-        return undefined;
-    }
 };
