@@ -15,7 +15,7 @@ type UploadSongResponse = {
 } | {
     success: false,
     clientErrorMessage?: string,
-    debug?: object;
+    debug?: object,
 }
 
 const uploadSong: RequestHandler = async (

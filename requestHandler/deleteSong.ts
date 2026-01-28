@@ -6,14 +6,26 @@ import { songMdDb } from "../services/neonDbClient";
 import { songsMdTable } from "../schema/songsMd";
 import { eq } from "drizzle-orm";
 
-const deleteSong: RequestHandler = async (req: Request, res: Response) => {
-    const { songId: s3Key } = req.params;
+type DeleteSongResponse = {
+    success: true;
+} | {
+    success: false;
+    clientErrorMessage?: string,
+    debug?: object
+}
+
+const deleteSong: RequestHandler = async (
+    req: Request,
+    res: Response<DeleteSongResponse>
+) => {
+    const { songId } = req.params;
+    const s3Key = songId;
 
     const isValidSongId = s3Key && typeof s3Key === "string";
     if (!isValidSongId) {
         return res.status(400).json({
             success: false,
-            error: "song id should be a string",
+            clientErrorMessage: "song id should be a string",
         });
     }
 
@@ -26,7 +38,10 @@ const deleteSong: RequestHandler = async (req: Request, res: Response) => {
     } catch (e) {
         return res.status(500).json({
             success: false,
-            message: `error occurred, ${(e as Error).message}`
+            clientErrorMessage: `error occurred`,
+            debug: {
+                errorMessage: `${(e as Error).message}`
+            }
         })
     }
 
@@ -49,12 +64,13 @@ const deleteSong: RequestHandler = async (req: Request, res: Response) => {
     if (isDeletedFromDb) {
         return res.status(200).json({
             success: true,
-            message: "delete successful",
         });
     } else {
         return res.status(500).json({
             success: false,
-            message: "delete failed, check song id",
+            debug: {
+                errorMessage: `delete failed, check song id, ${songId}`
+            }
         });
     }
 };
