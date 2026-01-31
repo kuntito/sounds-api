@@ -234,6 +234,25 @@ app.listen(PORT, () => {
 
     to create the tables in your neon account.
 
++   to add new column to neon postgresql
+    `
+    import { pgTable, text } from "drizzle-orm/pg-core";
+
+    export const songsMdTable = pgTable("songs_md", {
+        ...,
+        albumArtUrl: text("album_art_url"),
+    });
+
+    export type SongMd = typeof songsMdTable.$inferSelect;
+    `
+
+    where `albumArtUrl` is the new column.
+
+    then in terminal,
+    `npx drizzle-kit generate`
+    `npx drizzle-kit push`
+
+*** RANDOMS ***
 +   enables cross-origin requests for frontend integration:
     `npm install cors`
     `npm install -D @types/cors`
