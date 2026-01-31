@@ -23,6 +23,7 @@ const uploadSong: RequestHandler = async (
     req: Request,
     res: Response<UploadSongResponse>
 ) => {
+    // `req.file` is from multer
     const uploadedFile = req.file;
     if (!uploadedFile) {
         return res.status(400).json({
@@ -56,17 +57,6 @@ const uploadSong: RequestHandler = async (
 
     const s3Prefix = "tracks";
     const uniqueS3Key = `${s3Prefix}/${uniqueFileName}`;
-
-    // embed id into file..
-    NodeID3.update(
-        {
-            userDefinedText: [{
-                description: "id",
-                value: uniqueS3Key
-            }]
-        },
-        tempFp
-    )
 
     const fileBuffer = fs.readFileSync(tempFp);
 
