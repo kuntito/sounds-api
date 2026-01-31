@@ -134,6 +134,6 @@ const deleteUploadedSong = async (key: string) => {
             Key: key
         }))
     } catch (e) {
-        console.log(`could delete song with key: ${key}`);
+        console.log(`couldn't delete song with key: ${key}`);
     }
 }
