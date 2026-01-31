@@ -8,6 +8,7 @@ import { envConfig } from "../config/envConfig";
 import { songsMdTable } from "../schema/songsMd";
 import { songMdDb } from "../services/neonDbClient";
 import soundsS3 from "../services/s3Client";
+import { safeDeleteFromS3 } from "../helpers/deleteFromS3";
 
 
 type UploadSongResponse = {
@@ -98,7 +99,7 @@ const uploadSong: RequestHandler = async (
     } catch (error) {
 
         // if insert fails, delete uploaded song
-        deleteUploadedSong(uniqueS3Key);
+        safeDeleteFromS3(uniqueS3Key);
 
         return res
         .status(500)
@@ -123,17 +124,3 @@ const uploadSong: RequestHandler = async (
 };
 
 export default uploadSong;
-
-
-
-
-const deleteUploadedSong = async (key: string) => {
-    try {
-        await soundsS3.send(new DeleteObjectCommand({
-            Bucket: envConfig.AWS_BUCKET_NAME,
-            Key: key
-        }))
-    } catch (e) {
-        console.log(`couldn't delete song with key: ${key}`);
-    }
-}

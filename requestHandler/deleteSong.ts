@@ -1,10 +1,8 @@
-import { Request, Response, RequestHandler } from "express";
-import soundsS3 from "../services/s3Client";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { envConfig } from "../config/envConfig";
-import { songMdDb } from "../services/neonDbClient";
-import { songsMdTable } from "../schema/songsMd";
 import { eq } from "drizzle-orm";
+import { Request, RequestHandler, Response } from "express";
+import { safeDeleteFromS3 } from "../helpers/deleteFromS3";
+import { songsMdTable } from "../schema/songsMd";
+import { songMdDb } from "../services/neonDbClient";
 
 type DeleteSongResponse = {
     success: true;
@@ -45,21 +43,7 @@ const deleteSong: RequestHandler = async (
         })
     }
 
-    try {
-        await soundsS3.send(
-            new DeleteObjectCommand({
-                Bucket: envConfig.AWS_BUCKET_NAME,
-                Key: s3Key,
-            })
-        );
-    } catch (e) {
-        console.log(
-            `could not delete from s3, songKey is `,
-            s3Key,
-            `error: `,
-            (e as Error).message
-        );
-    }
+    safeDeleteFromS3(s3Key);
 
     if (isDeletedFromDb) {
         return res.status(200).json({
