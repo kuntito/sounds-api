@@ -34,7 +34,7 @@ const getAllSongsUrl: RequestHandler = async (
         });
     }
 
-    const urlPromises = maybeAllSongIds.map((s3Key: id) => 
+    const urlPromises = maybeAllSongIds.map((s3Key) => 
         getS3ObjectUrl(
             soundsS3,
             s3Key,

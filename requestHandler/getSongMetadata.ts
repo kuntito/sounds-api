@@ -4,7 +4,7 @@ import { SongMd, songsMdTable } from "../schema/songsMd";
 
 type GetSongsMetadataResponse = {
     success: true;
-    songsMd: SongMd[];
+    songsMd: Omit<SongMd, 'albumArtUrl'>[];
 } | {
     success: false;
     debug: object;

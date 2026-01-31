@@ -9,6 +9,7 @@ import { songsMdTable } from "../schema/songsMd";
 import { songMdDb } from "../services/neonDbClient";
 import soundsS3 from "../services/s3Client";
 import { safeDeleteFromS3 } from "../helpers/deleteFromS3";
+import { getExtensionFromContentType } from "../helpers/getExtensionFromContentType";
 
 
 type UploadSongResponse = {
@@ -42,6 +43,39 @@ const uploadSong: RequestHandler = async (
     }
     
     const tempFp = uploadedFile.path;
+    const id3Tags = NodeID3.read(tempFp);
+
+
+    // TODO put this elsewhere
+    const unknownArtworkUrl = String.raw`https://sounds-xyz.s3.eu-north-1.amazonaws.com/albumArt/artworkUnknown.png`;
+
+    let albumArtUrl = unknownArtworkUrl;
+    if (id3Tags.image && typeof id3Tags.image !== 'string' && id3Tags.image.mime !== undefined) {
+        const imgBuffer = Buffer.from(id3Tags.image.imageBuffer);
+        const imgUuid = randomUUID();
+
+        const contentType = id3Tags.image.mime;
+        const imgExtension = getExtensionFromContentType(contentType);
+        const imgFileName = `${id3Tags.title}-${id3Tags.artist}-${imgUuid}${imgExtension}`;
+
+        const imgS3Prefix = "albumArt/";
+        const imgS3Key = `${imgS3Prefix}${imgFileName}`;
+
+        try {
+            await soundsS3.send(new PutObjectCommand({
+                Bucket: envConfig.AWS_BUCKET_NAME,
+                Key: imgS3Key,
+                Body: imgBuffer,
+                ContentType: contentType,
+            }))
+
+            albumArtUrl = `https://${envConfig.AWS_BUCKET_NAME}.s3.${envConfig.AWS_REGION}.amazonaws.com/${imgS3Key}`;
+        } catch(e) {
+            console.log(`couldn't upload album art, ${(e as Error).message}`);
+        }
+    }
+
+
     
     const mp3suffix = ".mp3"
     const uuid = randomUUID();
@@ -55,8 +89,8 @@ const uploadSong: RequestHandler = async (
     // `fileSuffix` included for accurate display type in S3 console
     const uniqueFileName = `${fileStem}-${uuid}${mp3suffix}`;
 
-    const s3Prefix = "tracks";
-    const uniqueS3Key = `${s3Prefix}/${uniqueFileName}`;
+    const s3Prefix = "tracks/";
+    const uniqueS3Key = `${s3Prefix}${uniqueFileName}`;
 
     const fileBuffer = fs.readFileSync(tempFp);
 
@@ -81,13 +115,13 @@ const uploadSong: RequestHandler = async (
             })
     }
 
-    const tags = NodeID3.read(tempFp);
 
     try {
         await songMdDb.insert(songsMdTable).values({
             id: uniqueS3Key,
-            title: tags.title,
-            artist: tags.artist,
+            title: id3Tags.title,
+            artist: id3Tags.artist,
+            albumArtUrl: albumArtUrl,
         });
     } catch (error) {
 
