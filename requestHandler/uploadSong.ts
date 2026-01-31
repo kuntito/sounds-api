@@ -52,7 +52,10 @@ const uploadSong: RequestHandler = async (
     // uuid alone ensures uniqueness
     // `fileStem` included for readability in S3 console
     // `fileSuffix` included for accurate display type in S3 console
-    const uniqueS3Key = `${fileStem}-${uuid}${mp3suffix}`
+    const uniqueFileName = `${fileStem}-${uuid}${mp3suffix}`;
+
+    const s3Prefix = "tracks";
+    const uniqueS3Key = `${s3Prefix}/${uniqueFileName}`;
 
     // embed id into file..
     NodeID3.update(
