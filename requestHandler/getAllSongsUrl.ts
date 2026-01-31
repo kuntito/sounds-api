@@ -4,6 +4,7 @@ import getS3ObjectUrl from "../util/getS3ObjectUrl";
 import { envConfig } from "../config/envConfig";
 import soundsS3 from "../services/s3Client";
 
+// TODO start here, rewrite this so it returns song title and artist..
 type SongUrl = {
     songId: string;
     url: string;
@@ -33,13 +34,13 @@ const getAllSongsUrl: RequestHandler = async (
         });
     }
 
-    const urlPromises = maybeAllSongIds.map((id) => 
+    const urlPromises = maybeAllSongIds.map((s3Key: id) => 
         getS3ObjectUrl(
             soundsS3,
-            id,
+            s3Key,
             envConfig.AWS_BUCKET_NAME
         )
-        .then(url => ({songId: id, url: url}))
+        .then(url => ({songId: s3Key, url: url}))
         .catch(err => {
             console.log(`error occurred: ${(err as Error).message}`);
             return undefined;
