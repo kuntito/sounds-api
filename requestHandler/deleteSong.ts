@@ -17,9 +17,8 @@ const deleteSong: RequestHandler = async (
     res: Response<DeleteSongResponse>
 ) => {
     const { songId } = req.params;
-    const s3Key = songId;
 
-    const isValidSongId = s3Key && typeof s3Key === "string";
+    const isValidSongId = songId && typeof songId === "string";
     if (!isValidSongId) {
         return res.status(400).json({
             success: false,
@@ -27,11 +26,32 @@ const deleteSong: RequestHandler = async (
         });
     }
 
+    let s3Key: string | undefined = undefined;
+    try {
+        const song = await songMdDb
+            .select({ s3Key: songsMdTable.s3Key})
+            .from(songsMdTable)
+            .where(eq(songsMdTable.id, songId))
+            .limit(1);
+
+        if (song.length > 0) {
+            s3Key = song[0].s3Key;
+        } else {
+            console.log(`couldn't get s3 key, songId: ${songId}`);
+        }
+    } catch {
+        console.log(`couldn't get s3 key, songId: ${songId}`);
+    }
+
+    if (s3Key !== undefined) {
+        safeDeleteFromS3(s3Key);
+    }
+
     let isDeletedFromDb = false;
     try {
         const result = await songMdDb
             .delete(songsMdTable)
-            .where(eq(songsMdTable.id, s3Key));
+            .where(eq(songsMdTable.id, songId));
         isDeletedFromDb = (result.rowCount ?? 0) > 0;
     } catch (e) {
         return res.status(500).json({
@@ -43,7 +63,6 @@ const deleteSong: RequestHandler = async (
         })
     }
 
-    safeDeleteFromS3(s3Key);
 
     if (isDeletedFromDb) {
         return res.status(200).json({

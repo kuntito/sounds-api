@@ -4,7 +4,7 @@ import uploadSong from "../requestHandler/uploadSong";
 import getNewSongs from "../requestHandler/getNewSongs";
 import deleteSong from "../requestHandler/deleteSong";
 import getSongsMetadata from "../requestHandler/getSongMetadata";
-import { getAllSongsUrl } from "../requestHandler/getAllSongsUrl";
+import { getAllSongsWithUrl } from "../requestHandler/getAllSongsWithUrl";
 
 const songRouter = express.Router();
 
@@ -16,7 +16,7 @@ songRouter.post('/song', upload.single('audio'), uploadSong);
 
 songRouter.post('/new-songs', getNewSongs);
 songRouter.delete('/:songId', deleteSong);
-songRouter.get('/all-songs-url', getAllSongsUrl);
+songRouter.get('/all-songs-with-url', getAllSongsWithUrl);
 songRouter.get('/songs-md', getSongsMetadata);
 
 export default songRouter;

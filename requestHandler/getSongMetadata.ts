@@ -2,9 +2,11 @@ import { RequestHandler, Request, Response } from "express";
 import { songMdDb } from "../services/neonDbClient";
 import { SongMd, songsMdTable } from "../schema/songsMd";
 
+type SongMdBasic = Omit<SongMd, 'albumArtUrl' | 's3Key'>;
+
 type GetSongsMetadataResponse = {
     success: true;
-    songsMd: Omit<SongMd, 'albumArtUrl'>[];
+    songsMd: SongMdBasic[];
 } | {
     success: false;
     debug: object;
@@ -40,7 +42,8 @@ const getSongsMetadata = async (
             .select()
             .from(songsMdTable);
 
-        const normalizedMd = md.map(song => ({
+        // TODO clean up `...` after addressing missing tags
+        const normalizedMd: SongMdBasic[] = md.map(song => ({
             id: song.id,
             title: song.title ?? "...",
             artist: song.artist ?? "..."

@@ -10,6 +10,7 @@ import { songMdDb } from "../services/neonDbClient";
 import soundsS3 from "../services/s3Client";
 import { safeDeleteFromS3 } from "../helpers/deleteFromS3";
 import { getExtensionFromContentType } from "../helpers/getExtensionFromContentType";
+import { generateS3imageUrl } from "../helpers/generateS3imageUrl";
 
 
 type UploadSongResponse = {
@@ -56,7 +57,7 @@ const uploadSong: RequestHandler = async (
 
         const contentType = id3Tags.image.mime;
         const imgExtension = getExtensionFromContentType(contentType);
-        const imgFileName = `${id3Tags.title}-${id3Tags.artist}-${imgUuid}${imgExtension}`;
+        const imgFileName = `${imgUuid}.${imgExtension}`;
 
         const imgS3Prefix = "albumArt/";
         const imgS3Key = `${imgS3Prefix}${imgFileName}`;
@@ -69,7 +70,7 @@ const uploadSong: RequestHandler = async (
                 ContentType: contentType,
             }))
 
-            albumArtUrl = `https://${envConfig.AWS_BUCKET_NAME}.s3.${envConfig.AWS_REGION}.amazonaws.com/${imgS3Key}`;
+            albumArtUrl = generateS3imageUrl(imgS3Key);
         } catch(e) {
             console.log(`couldn't upload album art, ${(e as Error).message}`);
         }
@@ -79,7 +80,7 @@ const uploadSong: RequestHandler = async (
     
     const mp3suffix = ".mp3"
     const uuid = randomUUID();
-    const fileStem = path.basename(
+    const songFileStem = path.basename(
         uploadedFile.originalname, // `multer` uses a random file name without extension
         mp3suffix
     );
@@ -87,17 +88,17 @@ const uploadSong: RequestHandler = async (
     // uuid alone ensures uniqueness
     // `fileStem` included for readability in S3 console
     // `fileSuffix` included for accurate display type in S3 console
-    const uniqueFileName = `${fileStem}-${uuid}${mp3suffix}`;
+    const songUniqueFileName = `${songFileStem}-${uuid}${mp3suffix}`;
 
     const s3Prefix = "tracks/";
-    const uniqueS3Key = `${s3Prefix}${uniqueFileName}`;
+    const songUniqueS3Key = `${s3Prefix}${songUniqueFileName}`;
 
     const fileBuffer = fs.readFileSync(tempFp);
 
     try {
         await soundsS3.send(new PutObjectCommand({
             Bucket: envConfig.AWS_BUCKET_NAME,
-            Key: uniqueS3Key,
+            Key: songUniqueS3Key,
             Body: fileBuffer,
             ContentType: "audio/mpeg"
         }));
@@ -118,7 +119,7 @@ const uploadSong: RequestHandler = async (
 
     try {
         await songMdDb.insert(songsMdTable).values({
-            id: uniqueS3Key,
+            s3Key: songUniqueS3Key,
             title: id3Tags.title,
             artist: id3Tags.artist,
             albumArtUrl: albumArtUrl,
@@ -126,7 +127,7 @@ const uploadSong: RequestHandler = async (
     } catch (error) {
 
         // if insert fails, delete uploaded song
-        safeDeleteFromS3(uniqueS3Key);
+        safeDeleteFromS3(songUniqueS3Key);
 
         return res
         .status(500)
