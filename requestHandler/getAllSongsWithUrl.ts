@@ -37,7 +37,8 @@ const getAllSongsWithUrl: RequestHandler = async (
             s3Key: song.s3Key,
             title: song.title ?? "...",
             artist: song.artist ?? "...",
-            albumArtUrl: song.albumArtUrl
+            albumArtUrl: song.albumArtUrl,
+            durationMillis: song.durationMillis,
         }));
 
         const songPromises = normalizedMd.map((song) => 

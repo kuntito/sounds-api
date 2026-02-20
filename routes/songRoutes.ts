@@ -14,6 +14,7 @@ const songRouter = express.Router();
 const upload = multer({ dest: 'temp-uploads/'});
 songRouter.post('/song', upload.single('audio'), uploadSong);
 
+// TODO Claude says this isn't RESTful
 songRouter.post('/new-songs', getNewSongs);
 songRouter.delete('/:songId', deleteSong);
 songRouter.get('/all-songs-with-url', getAllSongsWithUrl);

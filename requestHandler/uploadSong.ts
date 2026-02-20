@@ -1,8 +1,7 @@
-import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
 import { Request, RequestHandler, Response } from "express";
 import fs from "fs";
-import NodeID3 from "node-id3";
 import path from "path";
 import { envConfig } from "../config/envConfig";
 import { songsMdTable } from "../schema/songsMd";
@@ -11,6 +10,7 @@ import soundsS3 from "../services/s3Client";
 import { safeDeleteFromS3 } from "../helpers/deleteFromS3";
 import { getExtensionFromContentType } from "../helpers/getExtensionFromContentType";
 import { generateS3imageUrl } from "../helpers/generateS3imageUrl";
+import { parseBuffer } from "music-metadata";
 
 
 type UploadSongResponse = {
@@ -44,18 +44,30 @@ const uploadSong: RequestHandler = async (
     }
     
     const tempFp = uploadedFile.path;
-    const id3Tags = NodeID3.read(tempFp);
+    const fileBuffer = fs.readFileSync(tempFp);
+    const song_metadata = await parseBuffer(fileBuffer);
+
+    const { 
+        common: commonTags,
+        format: audioFormat 
+    } = song_metadata;
+
+    const durationMillis = Math.round(
+        audioFormat.duration! // this assumes the file is an audio and must have duration.
+        * 1000
+    );
 
 
     // TODO put this elsewhere
     const unknownArtworkUrl = String.raw`https://sounds-xyz.s3.eu-north-1.amazonaws.com/albumArt/artworkUnknown.png`;
 
     let albumArtUrl = unknownArtworkUrl;
-    if (id3Tags.image && typeof id3Tags.image !== 'string' && id3Tags.image.mime !== undefined) {
-        const imgBuffer = Buffer.from(id3Tags.image.imageBuffer);
+    const albumArtInfo = commonTags.picture?.[0]
+    if (albumArtInfo) {
+        const imgBuffer = Buffer.from(albumArtInfo.data);
         const imgUuid = randomUUID();
 
-        const contentType = id3Tags.image.mime;
+        const contentType = albumArtInfo.format;
         const imgExtension = getExtensionFromContentType(contentType);
         const imgFileName = `${imgUuid}.${imgExtension}`;
 
@@ -93,7 +105,6 @@ const uploadSong: RequestHandler = async (
     const s3Prefix = "tracks/";
     const songUniqueS3Key = `${s3Prefix}${songUniqueFileName}`;
 
-    const fileBuffer = fs.readFileSync(tempFp);
 
     try {
         await soundsS3.send(new PutObjectCommand({
@@ -120,9 +131,10 @@ const uploadSong: RequestHandler = async (
     try {
         await songMdDb.insert(songsMdTable).values({
             s3Key: songUniqueS3Key,
-            title: id3Tags.title,
-            artist: id3Tags.artist,
+            title: commonTags.title,
+            artist: commonTags.artist,
             albumArtUrl: albumArtUrl,
+            durationMillis: durationMillis,
         });
     } catch (error) {
 

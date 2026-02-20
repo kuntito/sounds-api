@@ -264,6 +264,9 @@ app.listen(PORT, () => {
     `npm install multer`
     `npm install -D @types/multer`
 
++   check all ts files for errors, without generating js output
+    `npx tsc --noEmit`
+
 *** make dev URL public ***
 +   install `ngrok`, i had it installed but Claude says
     `npm install -g ngrok` would work

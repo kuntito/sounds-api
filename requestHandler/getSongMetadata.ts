@@ -46,7 +46,8 @@ const getSongsMetadata = async (
         const normalizedMd: SongMdBasic[] = md.map(song => ({
             id: song.id,
             title: song.title ?? "...",
-            artist: song.artist ?? "..."
+            artist: song.artist ?? "...",
+            durationMillis: song.durationMillis,
         }))
 
         return res
